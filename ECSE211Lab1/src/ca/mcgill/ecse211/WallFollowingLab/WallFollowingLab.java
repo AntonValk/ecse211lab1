@@ -1,5 +1,3 @@
-package ca.mcgill.ecse211.WallFollowingLab;
-
 import lejos.hardware.sensor.*;
 import lejos.hardware.ev3.LocalEV3;
 import lejos.hardware.motor.EV3LargeRegulatedMotor;
@@ -12,8 +10,8 @@ public class WallFollowingLab {
 
   // Parameters: adjust these for desired performance
 
-  private static final int bandCenter = 30; // Offset from the wall (cm)
-  private static final int bandWidth = 6; // Width of dead band (cm)
+  private static final int bandCenter = 35; // Offset from the wall (cm)
+  private static final int bandWidth = 5; // Width of dead band (cm)
   private static final int motorLow = 100; // Speed of slower rotating wheel (deg/sec)
   private static final int motorHigh = 200; // Speed of the faster rotating wheel (deg/seec)
 
