@@ -1,6 +1,7 @@
 package ca.mcgill.ecse211.WallFollowingLab;
 
 import lejos.hardware.motor.*;
+import java.util.Arrays;
 
 public class BangBangController implements UltrasonicController {
 
@@ -10,9 +11,11 @@ public class BangBangController implements UltrasonicController {
   private final int motorHigh;
   private int distance;
   private int distError;
+  private int[] avgVal = new int[5];
+  private int index = 0;
   
   private int filterControl;
-  private static final int FILTER_OUT = 23;
+  private static final int FILTER_OUT = 20;
 
 
   public BangBangController(int bandCenter, int bandwidth, int motorLow, int motorHigh) {
@@ -25,17 +28,31 @@ public class BangBangController implements UltrasonicController {
     WallFollowingLab.rightMotor.setSpeed(motorHigh);
     WallFollowingLab.leftMotor.forward();
     WallFollowingLab.rightMotor.forward();
-    
+    Arrays.fill(avgVal, 30);
     filterControl = 0;
     distError = 0;
   }
 
   @Override
   public void processUSData(int distance) {
-    this.distance = distance;
+	    distance = Math.min(distance, 100);
+	    this.index++;
+	    if(this.index == 5) {
+	    	this.index = 0;
+	    }
+	    
+	    avgVal[index] = distance;
+	    
+	    int avgDistance = 0;
+	    for (int i=0; i<avgVal.length; i++) {
+	    	avgDistance+=avgVal[i];
+	    }
+	    avgDistance = avgDistance / 5;
+	    
+	    this.distance = avgDistance;
     // TODO: process a movement based on the us distance passed in (BANG-BANG style)
     distError = this.distance - this.bandCenter;
-    if (distance >= 70 && filterControl < FILTER_OUT) {
+    if ((distance >= 70 || distance <=0) && filterControl < FILTER_OUT) {
         // bad value, do not set the distance var, however do increment the
         // filter value
         filterControl++;
@@ -61,14 +78,14 @@ public class BangBangController implements UltrasonicController {
     
     else if (distError > 0) {
     	WallFollowingLab.leftMotor.setSpeed(motorLow-30);
-    	WallFollowingLab.rightMotor.setSpeed(motorHigh+50); 
+    	WallFollowingLab.rightMotor.setSpeed(motorHigh+30); 
     	WallFollowingLab.leftMotor.forward();
     	WallFollowingLab.rightMotor.forward(); 
     }
     
     else if (distError < 0) {
-       	WallFollowingLab.leftMotor.setSpeed(motorHigh+50); 
-    	WallFollowingLab.rightMotor.setSpeed(motorLow-90);
+       	WallFollowingLab.leftMotor.setSpeed(motorHigh+37); 
+    	WallFollowingLab.rightMotor.setSpeed(motorLow-55);
     	WallFollowingLab.leftMotor.forward();
     	WallFollowingLab.rightMotor.forward(); 
     }

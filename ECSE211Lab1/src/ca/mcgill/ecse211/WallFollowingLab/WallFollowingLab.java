@@ -7,14 +7,15 @@ import lejos.hardware.port.Port;
 import lejos.robotics.SampleProvider;
 import lejos.hardware.Button;
 
+
 public class WallFollowingLab {
 
   // Parameters: adjust these for desired performance
 
   private static final int bandCenter = 30; // Offset from the wall (cm)
-  private static final int bandWidth = 8; // Width of dead band (cm)
+  private static final int bandWidth = 6; // Width of dead band (cm)
   private static final int motorLow = 100; // Speed of slower rotating wheel (deg/sec)
-  private static final int motorHigh = 250; // Speed of the faster rotating wheel (deg/seec)
+  private static final int motorHigh = 200; // Speed of the faster rotating wheel (deg/seec)
 
 
   private static final Port usPort = LocalEV3.get().getPort("S1");
@@ -22,7 +23,7 @@ public class WallFollowingLab {
       new EV3LargeRegulatedMotor(LocalEV3.get().getPort("A"));
   public static final EV3LargeRegulatedMotor rightMotor =
       new EV3LargeRegulatedMotor(LocalEV3.get().getPort("D"));
-
+  
   // Main entry point - instantiate objects used and set up sensor
 
   public static void main(String[] args) {
