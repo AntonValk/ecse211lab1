@@ -11,7 +11,7 @@ public class BangBangController implements UltrasonicController {
   private final int motorHigh;
   private int distance;
   private int distError;
-  private int[] avgVal = new int[5];
+  private int[] lastFiveDistance = new int[5];
   private int index = 0;
   
   private int filterControl;
@@ -24,11 +24,11 @@ public class BangBangController implements UltrasonicController {
     this.bandwidth = bandwidth;
     this.motorLow = motorLow;
     this.motorHigh = motorHigh;
+    Arrays.fill(lastFiveDistance, 30);
     WallFollowingLab.leftMotor.setSpeed(motorHigh); // Start robot moving forward
     WallFollowingLab.rightMotor.setSpeed(motorHigh);
     WallFollowingLab.leftMotor.forward();
     WallFollowingLab.rightMotor.forward();
-    Arrays.fill(avgVal, 30);
     filterControl = 0;
     distError = 0;
   }
@@ -41,15 +41,15 @@ public class BangBangController implements UltrasonicController {
 	    	this.index = 0;
 	    }
 	    
-	    avgVal[index] = distance;
+	    lastFiveDistance[index] = distance;
 	    
-	    int avgDistance = 0;
-	    for (int i=0; i<avgVal.length; i++) {
-	    	avgDistance+=avgVal[i];
+	    int average = 0;
+	    for (int i=0; i<lastFiveDistance.length; i++) {
+	    	average+=lastFiveDistance[i];
 	    }
-	    avgDistance = avgDistance / 5;
+	    average = average / 5;
 	    
-	    this.distance = avgDistance;
+	    this.distance = average;
     // TODO: process a movement based on the us distance passed in (BANG-BANG style)
     distError = this.distance - this.bandCenter;
     if ((distance >= 70 || distance <=0) && filterControl < FILTER_OUT) {
@@ -60,7 +60,7 @@ public class BangBangController implements UltrasonicController {
       } else if (distance >= 70) {
         // We have repeated large values, so there must actually be nothing
         // there: leave the distance alone
-        this.distance = distance;
+        this.distance = 70;
       } else if (distance <= 70){
         // distance went below 255: reset filter and leave
         // distance alone.
