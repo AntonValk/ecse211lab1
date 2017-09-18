@@ -1,5 +1,3 @@
-package ca.mcgill.ecse211.WallFollowingLab;
-
 import java.util.Arrays;
 
 import lejos.hardware.motor.EV3LargeRegulatedMotor;
@@ -7,18 +5,18 @@ import lejos.hardware.motor.EV3LargeRegulatedMotor;
 public class PController implements UltrasonicController {
 
   /* Constants */
-  private static final int MOTOR_SPEED = 200;
-  private static final int FILTER_OUT = 20;
+  private static final int MOTOR_SPEED = 195; // Default speed for the motor  (deg/sec)
+  private static final int FILTER_OUT = 20;	// Maximum number of times we filter large inputs
 
-  private final int bandCenter;
-  private final int bandWidth;
-  private int distance;
-  private int filterControl;
-  private int filterDistance;
-  private int previousError;
-  private int[] lastFiveDistance = new int[5];
-  private int index = 0;
-  private int distError;
+  private final int bandCenter; // Desired offset from the wall (cm)
+  private final int bandWidth;  // Width of dead band (cm)
+  private int distance; // Distance from the wall (cm)
+  private int filterControl; // Counts the amount of times we have filtered the input
+  private int filterDistance; // Sets a maximum value for the distance variable
+  private int previousError; // The previous offset from the band center (cm)
+  private int[] lastFiveDistance = new int[5]; // Array of the last 5 US outputs
+  private int index = 0; //Index to keep track of the array part we are accessing.
+  private int distError; // Current offset from the band center (cm)
 
   public PController(int bandCenter, int bandwidth) {
     this.bandCenter = bandCenter;
@@ -37,6 +35,11 @@ public class PController implements UltrasonicController {
 
   @Override
   public void processUSData(int distance) {
+	  
+	  // Because the US data tends to be inconsistent we take the average of 
+	  // 5 values from the sensor and set it equal to distance.
+	  // To prevent high sensor values from skewing the average we set values greater than 100 to 100.
+	  
 	  distance = Math.min(distance, 100);
 	    this.index++;
 	    if(this.index == 5) {
@@ -53,11 +56,8 @@ public class PController implements UltrasonicController {
 	    
 	    this.distance = average;
 
-    // rudimentary filter - toss out invalid samples corresponding to null
-    // signal.
-    // (n.b. this was not included in the Bang-bang controller, but easily
-    // could have).
-    //
+    // rudimentary filter - toss out invalid samples above a certain value
+	    
 	    distError = this.distance - this.bandCenter;	//offset between current position and ideal distance from wall (in cm)
 	   if ((distance >= 70 || distance <=0) && filterControl < FILTER_OUT) {
 	       // bad value, do not set the distance var, however do increment the
@@ -90,16 +90,16 @@ public class PController implements UltrasonicController {
 		WallFollowingLab.leftMotor.forward();
 		WallFollowingLab.rightMotor.forward();
 	}
-	else if(distError < 0)								//too close to wall - swerve right
+	else if(distError < 0)								//too close to wall - we must turn right
 	{
-		WallFollowingLab.leftMotor.setSpeed(MOTOR_SPEED + (bandCenter - Math.abs(this.distance)) * 5.5f); //constant higher because the distance closer to the wall is constrained (0-bandcenter)
+		WallFollowingLab.leftMotor.setSpeed(MOTOR_SPEED + (bandCenter - Math.abs(this.distance)) * 5.0f); //constant higher (if we don't turn fast we will hit the wall!)
 		WallFollowingLab.rightMotor.setSpeed(MOTOR_SPEED / 2);
 		WallFollowingLab.leftMotor.forward();
 		WallFollowingLab.rightMotor.forward();
 	}
-	else {									//too far from wall - swerve left
+	else {									//too far from wall - we must turn left
 		WallFollowingLab.leftMotor.setSpeed(MOTOR_SPEED / 2);	
-		WallFollowingLab.rightMotor.setSpeed(MOTOR_SPEED + this.distance * 2.5f);	//smaller constant as distance can get much higher (bandcenter-255)
+		WallFollowingLab.rightMotor.setSpeed(MOTOR_SPEED + this.distance * 2.5f);	//smaller constant as distance grows faster on left turns
 		WallFollowingLab.leftMotor.forward();
 		WallFollowingLab.rightMotor.forward();
 	}
