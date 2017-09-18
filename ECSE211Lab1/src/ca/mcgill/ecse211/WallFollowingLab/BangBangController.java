@@ -1,21 +1,19 @@
-package ca.mcgill.ecse211.WallFollowingLab;
-
 import lejos.hardware.motor.*;
 import java.util.Arrays;
 
 public class BangBangController implements UltrasonicController {
 
-  private final int bandCenter;
-  private final int bandwidth;
-  private final int motorLow;
-  private final int motorHigh;
-  private int distance;
-  private int distError;
-  private int[] lastFiveDistance = new int[5];
-  private int index = 0;
+  private final int bandCenter; // Desired offset from the wall (cm)
+  private final int bandwidth; // Width of dead band (cm)
+  private final int motorLow;  //Define motor speed (200 deg/sec)
+  private final int motorHigh; //Define secondary speed (100 deg/sec)
+  private int distance; //Current offset from the wall
+  private int distError; // Current offset from desired distance
+  private int[] lastFiveDistance = new int[5]; // Array of the last 5 US outputs
+  private int index = 0; //Index to keep track of the array part we are accessing.
   
-  private int filterControl;
-  private static final int FILTER_OUT = 20;
+  private int filterControl; // Counts the amount of times we have filtered the input
+  private static final int FILTER_OUT = 20; // Maximum number of times we filter large inputs
 
 
   public BangBangController(int bandCenter, int bandwidth, int motorLow, int motorHigh) {
@@ -35,6 +33,11 @@ public class BangBangController implements UltrasonicController {
 
   @Override
   public void processUSData(int distance) {
+	  
+	  // Because the US data tends to be inconsistent we take the average of 
+	  // 5 values from the sensor and set it equal to distance.
+	  // To prevent high sensor values from skewing the average we set values greater than 100 to 100.
+	  
 	    distance = Math.min(distance, 100);
 	    this.index++;
 	    if(this.index == 5) {
@@ -50,7 +53,8 @@ public class BangBangController implements UltrasonicController {
 	    average = average / 5;
 	    
 	    this.distance = average;
-    // TODO: process a movement based on the us distance passed in (BANG-BANG style)
+	    
+    // Basic filter used to ignore bad inputs with high values for a short amount of time
     distError = this.distance - this.bandCenter;
     if ((distance >= 70 || distance <=0) && filterControl < FILTER_OUT) {
         // bad value, do not set the distance var, however do increment the
